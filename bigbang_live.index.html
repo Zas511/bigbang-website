@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIG BANG - مخلوقاتنا (Live)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Define color variables for consistency */
+        :root {
+            --color-bg: #0a0a0a;
+            --color-surface: #1a1a1a;
+            --color-primary: #00A99D; /* A slightly brighter teal */
+            --color-secondary: #FF8C42; /* A vibrant orange */
+            --color-accent: #A7D2CB;
+            --color-text: #E0E0E0;
+            --color-text-muted: #A0A0A0;
+            --color-level-1: #00A99D; /* Teal for Section */
+            --color-level-2: #FF8C42; /* Orange for Type */
+            --color-level-3: #A7D2CB; /* Light Blue for Species */
+        }
+        /* Basic styling and font */
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Almarai', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            overflow-x: hidden;
+            direction: rtl; /* Ensure RTL layout */
+        }
+        /* Container for the 3D canvas */
+        #three-container {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: -1;
+            transition: background-color 1s ease-in-out;
+        }
+        /* Custom styles for UI elements */
+        .main-container {
+            position: relative; z-index: 1; min-height: 100vh;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; padding: 1rem;
+        }
+        .section-item, .category-item, .type-item, .species-item {
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        /* Interactive element styling */
+        .interactive-item { @apply p-4 rounded-xl shadow-lg transition-all duration-300 transform; }
+        .interactive-item:hover { @apply scale-105 shadow-2xl; }
+        /* Details card styling */
+        .details-card {
+            border-left: 5px solid;
+            background-color: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        /* Slideshow navigation styling */
+        .slide-button { @apply p-2 rounded-full bg-color-primary text-white text-xl transition-all duration-300; }
+        .slide-button:hover { @apply bg-color-secondary scale-110; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div id="main-title" class="text-center text-4xl sm:text-5xl font-extrabold text-white cursor-pointer transition-all duration-500 hover:text-color-primary">
+            مخلوقاتنا
+        </div>
+        <div id="sections-container" class="mt-12 w-full flex flex-wrap justify-center gap-6 md:gap-12 hidden">
+           </div>
+        <div id="categories-container" class="mt-8 w-full flex flex-wrap justify-center gap-6 md:gap-12 hidden">
+            </div>
+        <div id="types-container" class="mt-8 w-full flex flex-wrap justify-center gap-6 md:gap-12 hidden">
+            </div>
+        <div id="species-container" class="mt-8 w-full flex flex-wrap justify-center gap-6 md:gap-12 hidden">
+            </div>
+        <div id="details-card-container" class="mt-12 w-full hidden">
+            </div>
+    </div>
+
+<script>
+    // --- SUPABASE SETUP ---
+    const SUPABASE_URL = 'https://ntnmbfdhxbclvgplbijw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50bm1iZmRoeGJjbHZncGxiaWp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODk1MTQsImV4cCI6MjA3MjE2NTUxNH0.RLtF1R4vMGS09yDeaLg6rCg_UR96FS_8QI5YHG7-bFQ';
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let liveCreaturesData = {}; // This will hold the data fetched from Supabase
+
+    // --- DATA FETCHING ---
+    async function fetchAndStructureCreatures() {
+        const { data, error } = await supabase.from('creatures').select('*');
+        if (error) {
+            console.error('Error fetching creatures:', error);
+            return null;
+        }
+
+        const nestedData = {};
+        data.forEach(creature => {
+            const { environment, category, type, common_name } = creature;
+            if (!nestedData[environment]) nestedData[environment] = {};
+            if (!nestedData[environment][category]) nestedData[environment][category] = {};
+            if (!nestedData[environment][category][type]) nestedData[environment][category][type] = {};
+            
+            const formattedCreature = {
+              "الاسم العلمي": creature.scientific_name,
+              "صور ومقاطع فيديو": {
+                "صورة رئيسية": creature.main_image_url || `https://placehold.co/400x300/1a1a1a/E0E0E0?text=${encodeURIComponent(common_name)}`,
+                "معرض صور": creature.gallery_urls || [],
+                "مقاطع فيديو": creature.video_url ? [creature.video_url] : []
+              },
+              "صوت المخلوق": creature.sound_url || "لا يوجد صوت مميز",
+              "البيئة": creature.environment,
+              "القسم": creature.category,
+              "النوع": creature.type,
+              "مستوى الرعاية": creature.care_level,
+              "السعر": creature.price_range,
+              "نص وصفي": creature.description,
+              "معلومات تفصيلية": {
+                "الموطن الأصلي": creature.origin,
+                "متوسط العمر": creature.lifespan,
+                "الحجم والوزن": creature.size_weight,
+                "السلوك": creature.behavior,
+                "متطلبات التغذية": creature.nutrition_req,
+                "متطلبات السكن": creature.housing_req,
+                "متطلبات الرعاية الصحية": creature.health_req
+              },
+              "ملاحظات إضافية": {
+                "التوافق مع الحيوانات الأخرى": creature.compatibility,
+                "الترخيص": creature.license_required ? 'يتطلب ترخيصاً' : 'لا يتطلب',
+                "مناسب للمبتدئين": creature.beginner_friendly,
+                "المستلزمات الضرورية": creature.required_supplies || []
+              },
+              "ايقونة": creature.icon_fa
+            };
+            nestedData[environment][category][type][common_name] = formattedCreature;
+        });
+        return nestedData;
+    }
+
+    // UI state variables and DOM elements
+    const mainTitle = document.getElementById('main-title');
+    const sectionsContainer = document.getElementById('sections-container');
+    const categoriesContainer = document.getElementById('categories-container');
+    const typesContainer = document.getElementById('types-container');
+    const speciesContainer = document.getElementById('species-container');
+    const detailsCardContainer = document.getElementById('details-card-container');
+    const threeContainer = document.getElementById('three-container');
+    const colors = {
+        الهواء: { background: '#ADD8E6', particles: 0xADD8E6 },
+        اليابسة: { background: '#A0522D', particles: 0xA0522D },
+        الماء: { background: '#ADD8E6', particles: 0xADD8E6 }
+    };
+    const initialParticleColors = [0xFF8C42, 0x00A99D, 0xA7D2CB];
+
+    // --- UI Rendering Functions ---
+    function resetUI() {
+        document.querySelectorAll('.section-item, .category-item, .type-item, .species-item').forEach(el => {
+            el.style.color = 'var(--color-text)';
+        });
+        sectionsContainer.classList.add('hidden');
+        categoriesContainer.classList.add('hidden');
+        typesContainer.classList.add('hidden');
+        speciesContainer.classList.add('hidden');
+        detailsCardContainer.classList.add('hidden');
+    }
+
+    mainTitle.addEventListener('click', () => {
+        resetUI();
+        renderSections();
+        App.updateBackgroundColor(null);
+    });
+
+    function renderSections() {
+        sectionsContainer.innerHTML = '';
+        Object.keys(liveCreaturesData).forEach(section => {
+            const sectionEl = document.createElement('div');
+            sectionEl.textContent = section;
+            sectionEl.classList.add('interactive-item', 'section-item', 'text-2xl', 'md:text-4xl', 'font-bold', 'cursor-pointer', 'transition-colors', 'duration-300', 'hover:text-color-primary');
+            sectionEl.addEventListener('click', () => {
+                document.querySelectorAll('.section-item').forEach(el => el.style.color = 'var(--color-text)');
+                sectionEl.style.color = 'var(--color-level-1)';
+                renderCategories(section, liveCreaturesData[section]);
+                App.updateBackgroundColor(colors[section]);
+            });
+            sectionsContainer.appendChild(sectionEl);
+        });
+        sectionsContainer.classList.remove('hidden');
+    }
+
+    function renderCategories(selectedSection, data) {
+        categoriesContainer.innerHTML = '';
+        typesContainer.classList.add('hidden');
+        speciesContainer.classList.add('hidden');
+        detailsCardContainer.classList.add('hidden');
+        Object.keys(data).forEach(category => {
+            const categoryEl = document.createElement('div');
+            categoryEl.textContent = category;
+            categoryEl.classList.add('interactive-item', 'category-item', 'text-xl', 'md:text-3xl', 'cursor-pointer', 'transition-colors', 'duration-300', 'hover:text-color-secondary');
+            categoryEl.addEventListener('click', () => {
+                document.querySelectorAll('.category-item').forEach(el => el.style.color = 'var(--color-text)');
+                categoryEl.style.color = 'var(--color-level-2)';
+                renderTypes(selectedSection, data[category]);
+            });
+            categoriesContainer.appendChild(categoryEl);
+        });
+        categoriesContainer.classList.remove('hidden');
+    }
+
+    function renderTypes(selectedSection, data) {
+        typesContainer.innerHTML = '';
+        speciesContainer.classList.add('hidden');
+        detailsCardContainer.classList.add('hidden');
+        Object.keys(data).forEach(type => {
+            const typeEl = document.createElement('div');
+            typeEl.textContent = type;
+            typeEl.classList.add('interactive-item', 'type-item', 'text-lg', 'md:text-2xl', 'cursor-pointer', 'transition-colors', 'duration-300', 'hover:text-color-accent');
+            typeEl.addEventListener('click', () => {
+                document.querySelectorAll('.type-item').forEach(el => el.style.color = 'var(--color-text)');
+                typeEl.style.color = 'var(--color-level-3)';
+                renderSpecies(selectedSection, data[type]);
+            });
+            typesContainer.appendChild(typeEl);
+        });
+        typesContainer.classList.remove('hidden');
+    }
+
+    function renderSpecies(selectedSection, data) {
+        speciesContainer.innerHTML = '';
+        detailsCardContainer.classList.add('hidden');
+        Object.keys(data).forEach(species => {
+            const speciesEl = document.createElement('div');
+            speciesEl.textContent = species;
+            speciesEl.classList.add('interactive-item', 'species-item', 'text-lg', 'md:text-xl', 'cursor-pointer', 'transition-colors', 'duration-300', 'hover:text-white');
+            speciesEl.addEventListener('click', () => {
+                document.querySelectorAll('.species-item').forEach(el => el.style.color = 'var(--color-text)');
+                speciesEl.style.color = 'white';
+                renderDetailsCard(data[species], species, selectedSection);
+            });
+            speciesContainer.appendChild(speciesEl);
+        });
+        speciesContainer.classList.remove('hidden');
+    }
+
+    function renderDetailsCard(creature, speciesName, section) {
+        let borderColor = colors[section] ? colors[section].background : 'var(--color-primary)';
+        const slides = [
+            { title: 'معلومات أساسية', content: `
+                <p><strong>الاسم العلمي:</strong> ${creature['الاسم العلمي']}</p>
+                <p><strong>مستوى الرعاية:</strong> <i class="fas fa-hand-holding-heart text-color-secondary ml-2"></i>${creature['مستوى الرعاية']}</p>
+                <p><strong>السعر:</strong> <i class="fas fa-dollar-sign text-color-secondary ml-2"></i>${creature['السعر']}</p>
+                <p><strong>نص وصفي:</strong> ${creature['نص وصفي']}</p>
+                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse mt-4">
+                    <img src="${creature['صور ومقاطع فيديو']['صورة رئيسية']}" alt="صورة رئيسية لـ ${speciesName}" class="rounded-lg w-full md:w-1/2">
+                </div>`
+            },
+            { title: 'معلومات تفصيلية', content: `
+                <p><strong>الموطن الأصلي:</strong> <i class="fas fa-globe text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['الموطن الأصلي']}</p>
+                <p><strong>متوسط العمر:</strong> <i class="fas fa-hourglass-half text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['متوسط العمر']}</p>
+                <p><strong>الحجم والوزن:</strong> <i class="fas fa-ruler-combined text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['الحجم والوزن']}</p>
+                <p><strong>السلوك:</strong> <i class="fas fa-brain text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['السلوك']}</p>
+                <p><strong>متطلبات التغذية:</strong> <i class="fas fa-utensils text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['متطلبات التغذية']}</p>
+                <p><strong>متطلبات السكن:</strong> <i class="fas fa-house-chimney text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['متطلبات السكن']}</p>
+                <p><strong>متطلبات الرعاية الصحية:</strong> <i class="fas fa-heart-pulse text-color-secondary ml-2"></i>${creature['معلومات تفصيلية']['متطلبات الرعاية الصحية']}</p>`
+            },
+            { title: 'ملاحظات إضافية', content: `
+                <p><strong>التوافق مع الحيوانات الأخرى:</strong> <i class="fas fa-handshake text-color-secondary ml-2"></i>${creature['ملاحظات إضافية']['التوافق مع الحيوانات الأخرى']}</p>
+                <p><strong>الترخيص:</strong> <i class="fas fa-id-card text-color-secondary ml-2"></i>${creature['ملاحظات إضافية']['الترخيص']}</p>
+                <p><strong>مناسب للمبتدئين:</strong> ${creature['ملاحظات إضافية']['مناسب للمبتدئين'] ? '<i class="fas fa-check-circle text-green-500 ml-2"></i> نعم' : '<i class="fas fa-times-circle text-red-500 ml-2"></i> لا'}</p>
+                <p><strong>المستلزمات الضرورية:</strong> <i class="fas fa-toolbox text-color-secondary ml-2"></i>${(creature['ملاحظات إضافية']['المستلزمات الضرورية'] || []).join(', ')}</p>`
+            }
+        ];
+        detailsCardContainer.innerHTML = `
+            <div class="details-card p-6 sm:p-8 rounded-xl shadow-xl max-w-3xl mx-auto" style="border-left-color: ${borderColor};">
+                <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4 flex items-center justify-between">
+                    ${speciesName}
+                    <i class="${creature.ايقونة} text-3xl sm:text-4xl" style="color: ${borderColor}"></i>
+                </h2>
+                <div id="slideshow" class="relative">
+                    <div id="slideshow-content" class="bg-gray-800 bg-opacity-50 p-4 rounded-lg transition-opacity duration-500 ease-in-out min-h-[200px]"></div>
+                    <div class="flex justify-between items-center mt-4">
+                        <button id="prev-btn" class="slide-button"><i class="fas fa-chevron-right"></i></button>
+                        <span id="slide-title" class="text-color-primary font-bold text-lg"></span>
+                        <button id="next-btn" class="slide-button"><i class="fas fa-chevron-left"></i></button>
+                    </div>
+                </div>
+            </div>`;
+        detailsCardContainer.classList.remove('hidden');
+
+        const slideshowContent = document.getElementById('slideshow-content');
+        const slideTitle = document.getElementById('slide-title');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        let currentSlide = 0;
+        function showSlide(index) {
+            currentSlide = (index + slides.length) % slides.length;
+            slideTitle.textContent = slides[currentSlide].title;
+            slideshowContent.innerHTML = slides[currentSlide].content;
+        }
+        prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+        nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+        showSlide(0);
+    }
+
+    // --- Three.js code for the animated particle background ---
+    const App = {
+        state: { threeInstances: {}, currentMaterial: null },
+        init() {
+            const threeContainer = document.createElement('div');
+            threeContainer.id = 'three-container';
+            document.body.appendChild(threeContainer);
+            this.setupThree('main', threeContainer);
+            this.onWindowResize();
+            window.addEventListener('resize', this.onWindowResize.bind(this));
+            this.animate();
+        },
+        setupThree(instanceName, container) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < 5000; i++) {
+                vertices.push((Math.random() - 0.5) * 2000, (Math.random() - 0.5) * 2000, (Math.random() - 0.5) * 2000);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const material = new THREE.PointsMaterial({ size: 1, sizeAttenuation: true, vertexColors: true, transparent: true });
+            const colorsAttribute = [];
+            const colorA = new THREE.Color(initialParticleColors[0]);
+            const colorB = new THREE.Color(initialParticleColors[1]);
+            const colorC = new THREE.Color(initialParticleColors[2]);
+            for (let i = 0; i < 5000; i++) {
+                if (i % 3 === 0) colorsAttribute.push(colorA.r, colorA.g, colorA.b);
+                else if (i % 3 === 1) colorsAttribute.push(colorB.r, colorB.g, colorB.b);
+                else colorsAttribute.push(colorC.r, colorC.g, colorC.b);
+            }
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorsAttribute, 3));
+            const points = new THREE.Points(geometry, material);
+            scene.add(points);
+            camera.position.z = 1000;
+            this.state.threeInstances[instanceName] = { scene, camera, renderer, objects: [points] };
+            this.state.currentMaterial = material;
+        },
+        updateBackgroundColor(newColor) {
+            const { renderer } = this.state.threeInstances.main;
+            if (!newColor) {
+                renderer.domElement.style.backgroundColor = 'var(--color-bg)';
+                this.state.currentMaterial.color.set(0xffffff);
+                this.state.currentMaterial.needsUpdate = true;
+                return;
+            }
+            renderer.domElement.style.backgroundColor = newColor.background;
+            this.state.currentMaterial.color.set(newColor.particles);
+            this.state.currentMaterial.needsUpdate = true;
+        },
+        animate() {
+            requestAnimationFrame(this.animate.bind(this));
+            Object.values(this.state.threeInstances).forEach(instance => {
+                instance.objects.forEach(obj => { obj.rotation.y += 0.0001; });
+                instance.renderer.render(instance.scene, instance.camera);
+            });
+        },
+        onWindowResize() {
+            Object.values(this.state.threeInstances).forEach(instance => {
+                instance.camera.aspect = window.innerWidth / window.innerHeight;
+                instance.camera.updateProjectionMatrix();
+                instance.renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+    };
+
+    // --- Start the application ---
+    async function initializeApp() {
+        App.init(); // Initialize 3D background
+        sectionsContainer.innerHTML = '<p class="text-xl text-color-accent animate-pulse">جاري تحميل بيانات المخلوقات...</p>';
+        sectionsContainer.classList.remove('hidden');
+        
+        liveCreaturesData = await fetchAndStructureCreatures();
+        
+        if (liveCreaturesData && Object.keys(liveCreaturesData).length > 0) {
+            renderSections(); // Render the UI with live data
+        } else {
+            sectionsContainer.innerHTML = '<p class="text-xl text-red-500">حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى.</p>';
+        }
+    }
+
+    window.onload = initializeApp;
+</script>
+
+</body>
+</html>
