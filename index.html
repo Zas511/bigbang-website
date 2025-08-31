@@ -1,335 +1,614 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIG BANG - The Journey (Live Data)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/ScrollTrigger.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        /* All original styles from your file are preserved here */
-        body {
-            font-family: 'Almarai', sans-serif;
-            background-color: #000;
-            color: #fff;
-            overflow-x: hidden;
-        }
-        canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            outline: none;
-            z-index: -1;
-        }
-        .main-container {
-            position: relative;
-            z-index: 1;
-        }
-        .narrative-section {
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .content-box {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 1rem;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIG BANG - المشهد الأخير</title>
+    <!-- Tailwind CSS & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Core 3D & Animation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script> 
+
+    <!-- 3D Post-processing & Helpers -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/VignetteShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Sky.js"></script> 
+
+    <style>
+        body {
+            font-family: 'Almarai', sans-serif;
+            color: #E5E7EB;
+            position: relative;
+            direction: rtl;
+            overflow-x: hidden;
+            background-color: #000; 
+        }
+        canvas#big-bang-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; 
+        }
+        main {
+            background-color: transparent;
+            position: relative;
+            z-index: 1;
+        }
+        .interactive-icon {
+            background: transparent; border: none;
+            transform: scale(1);
+            transition: transform 0.2s ease, opacity 0.3s ease, color 0.3s ease;
+            cursor: pointer; position: relative; color: #9CA3AF;
+        }
+        .interactive-icon:hover { transform: scale(1.1); }
+        .icon-gradient-text {
+            background-clip: text; -webkit-background-clip: text; color: transparent;
+            background-image: linear-gradient(90deg, #818cf8, #3b82f6, #818cf8);
+            background-size: 200% auto; animation: gradient-text 5s ease infinite;
+        }
+        .tooltip {
+            position: absolute; bottom: -2.5rem; left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(17, 24, 39, 0.9); color: white;
+            padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem;
+            white-space: nowrap; opacity: 0; visibility: hidden;
+            transition: opacity 0.2s ease; pointer-events: none;
+        }
+        .interactive-icon:hover .tooltip { opacity: 1; visibility: visible; }
+        @keyframes gradient-text {
+            0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+        }
+        .primary-heading {
+            background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(90deg, #FFD700, #FF8C42, #FFD700);
+            font-weight: 800;
+        }
+        .secondary-heading {
+            background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(90deg, #818cf8, #3b82f6, #818cf8);
+            font-weight: 800;
+        }
+        .narrative-section {
+            min-height: 150vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+            padding: 2rem; position: relative;
+        }
+        #final-section { min-height: 100vh; justify-content: flex-end; padding-bottom: 10vh; }
+        .flippable-card-container { perspective: 1000px; }
+        .flippable-card {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .flippable-card.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 1.5rem; padding: 1.5rem;
+            overflow-y: auto; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
+        .card-face-bordered {
+             background: rgba(31, 41, 55, 0.8);
+             border: 1px solid rgba(75, 85, 99, 0.4);
+        }
+        .card-back { transform: rotateY(180deg); }
+        .modal {
+            display: none; position: fixed; z-index: 100;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background-color: #1F2937; margin: 5% auto; padding: 2rem;
+            border: 1px solid #374151; width: 95%; max-width: 800px;
+            border-radius: 1.5rem; animation: slideIn 0.3s ease-out; position: relative;
+        }
+        .close-button { color: #aaa; float: left; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .back-button { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .design-sub-icons {
+            display: none; flex-direction: column; gap: 2rem; position: absolute;
+            top: 120%; left: 50%; transform: translateX(-50%);
+            background-color: rgba(17, 24, 39, 0.8); padding: 1.5rem;
+            border-radius: 1.5rem; width: 250px; opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #creature-design-ui-container.expanded .design-sub-icons { display: flex; opacity: 1; transform: translateX(-50%) translateY(0); }
+        .design-option { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .design-arrow { background: none; border: none; color: #9CA3AF; font-size: 1.5rem; cursor: pointer; }
+        .design-icon-display { font-size: 2rem; width: 60px; text-align: center; }
+        #biome-transform-ui, #explore-creatures-ui {
+            position: fixed; bottom: 5%; left: 50%;
+            transform: translateX(-50%); display: flex; gap: 2rem;
+            z-index: 10; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #explore-creatures-ui { bottom: 15%; }
+        #biome-transform-ui.visible, #explore-creatures-ui.visible { opacity: 1; pointer-events: auto; }
+        .biome-transform-icon.active { color: #FFD700; transform: scale(1.2); }
+        
+        /* Animal Card Modal Styles */
+        .animal-card-carousel { position: relative; display: none; }
+        #animal-card-browser .selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        #animal-card-browser .selection-item { background-color: #374151; padding: 1.5rem; border-radius: 0.75rem; text-align: center; cursor: pointer; transition: background-color 0.2s; }
+        #animal-card-browser .selection-item:hover { background-color: #4B5563; }
+        
+        .animal-nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); font-size: 2rem; z-index: 10; }
+        .animal-nav-arrow.next { left: -3rem; }
+        .animal-nav-arrow.prev { right: -3rem; }
+        .animal-card-tabs { border-bottom: 1px solid #374151; margin-bottom: 1rem; }
+        .animal-card-tab { background: transparent; border: none; color: #9CA3AF; padding: 0.5rem 1rem; }
+        .animal-card-tab.active { color: #FFD700; border-bottom: 2px solid #FFD700; }
+        .animal-card-tab-content { display: none; }
+        .animal-card-tab-content.active { display: block; animation: fadeIn 0.5s; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; text-align: center; }
+        .info-item { background: #111827; padding: 1rem; border-radius: 0.75rem; }
+        .info-item i { font-size: 1.5rem; margin-bottom: 0.5rem; color: #818cf8; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        @media (max-width: 768px) {
+            .narrative-section { padding: 1rem; }
+            .text-7xl { font-size: 4rem; }
+            .modal-content { margin: 5% auto; }
+            .animal-nav-arrow { font-size: 1.5rem; }
+            .animal-nav-arrow.next { left: -1.5rem; }
+            .animal-nav-arrow.prev { right: -1.5rem; }
+        }
+    </style>
 </head>
 <body>
-    <canvas id="three-canvas"></canvas>
+    
+    <canvas id="big-bang-canvas"></canvas> 
 
-    <div class="main-container">
-        <section id="big-bang-section" class="narrative-section">
-            <div class="content-box">
-                <h1 class="text-5xl font-extrabold">الانفجار العظيم</h1>
-                <p class="mt-4">مرر للأسفل لبدء رحلتك.</p>
-            </div>
-        </section>
+    <div id="biome-transform-ui">
+        <button class="interactive-icon biome-transform-icon" data-target="desert">
+            <i class="fas fa-sun text-5xl"></i> <span class="tooltip">رحلة الصيف</span>
+        </button>
+        <button class="interactive-icon biome-transform-icon" data-target="snow">
+            <i class="fas fa-snowflake text-5xl"></i> <span class="tooltip">رحلة الشتاء</span>
+        </button>
+    </div>
+    
+    <div id="explore-creatures-ui">
+        <button id="explore-creatures-btn" class="interactive-icon">
+             <i class="fas fa-paw text-5xl icon-gradient-text"></i> <span class="tooltip">استكشف المخلوقات</span>
+        </button>
+    </div> 
 
-        <section id="design-creature-section" class="narrative-section">
-            </section>
+    <main>
+        <section id="big-bang-section" class="narrative-section">
+             <h1 class="text-7xl lg:text-9xl font-extrabold primary-heading">BIG BANG</h1>
+            <p id="big-bang-tagline" class="mt-4 text-xl lg:text-2xl max-w-2xl font-light leading-relaxed">حيث تبدأ الحياة</p>
+            <p class="mt-8 text-sm text-gray-400 animate-pulse">قم بالتمرير للبدء</p>
+        </section> 
 
-        <section id="journey-start-section" class="narrative-section">
-            <div class="content-box">
-                <h2 class="text-4xl">بداية الرحلة</h2>
-            </div>
-        </section>
+        <section id="design-creature-section" class="narrative-section min-h-[200vh]">
+            <div id="creature-design-ui-container" class="relative">
+                <button id="design-trigger-icon" class="interactive-icon flex flex-col items-center text-center p-4 rounded-3xl" style="opacity: 0;">
+                    <i class="fa-solid fa-palette text-5xl icon-gradient-text"></i> <span class="tooltip">صمم مخلوقك</span>
+                </button>
+                <div class="design-sub-icons">
+                    <div class="design-option">
+                        <button class="design-arrow" data-control="color-prev"><i class="fas fa-chevron-right"></i></button>
+                        <div id="color-display" class="design-icon-display"><i class="fas fa-tint text-2xl"></i></div>
+                        <button class="design-arrow" data-control="color-next"><i class="fas fa-chevron-left"></i></button>
+                    </div>
+                    <div class="design-option">
+                        <button class="design-arrow" data-control="shape-prev"><i class="fas fa-chevron-right"></i></button>
+                        <div id="shape-display" class="design-icon-display"><i class="fas fa-cube text-2xl"></i></div>
+                        <button class="design-arrow" data-control="shape-next"><i class="fas fa-chevron-left"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section> 
 
-        <section id="city-section" class="narrative-section">
-             <div class="content-box">
-                <h2 class="text-4xl font-bold">عالم المدينة</h2>
-                <p class="mt-2" id="city-creatures-list">تحميل المخلوقات...</p>
-            </div>
-        </section>
-        
-        <section id="forest-section" class="narrative-section">
-             <div class="content-box">
-                <h2 class="text-4xl font-bold">عالم الغابة</h2>
-                 <p class="mt-2" id="forest-creatures-list">تحميل المخلوقات...</p>
-            </div>
-        </section>
+        <section id="journey-start-section" class="narrative-section"></section>
+        <section id="journey-sky-section" class="narrative-section"></section>
+        <section id="journey-forest-section" class="narrative-section"></section>
+        <section id="journey-water-section" class="narrative-section"></section> 
 
-        </div>
+        <section id="city-section" class="narrative-section">
+            <div id="city-nav-ui" class="flex flex-col items-center justify-between h-full w-full max-w-xs py-16" style="opacity: 0; pointer-events: none;">
+                <button class="interactive-icon p-6" data-action="services"><i class="fas fa-handshake text-5xl icon-gradient-text"></i><span class="tooltip">الخدمات</span></button>
+                <button class="interactive-icon p-6" data-action="profile"><i class="fas fa-user-circle text-5xl icon-gradient-text"></i><span class="tooltip">الملف الشخصي</span></button>
+            </div>
+        </section> 
+
+        <section id="final-section" class="narrative-section">
+            <div id="final-card-container" class="flippable-card-container w-64 h-40 mt-12" style="opacity: 0;">
+                <div id="our-story-card" class="flippable-card">
+                    <div class="card-face"><h3 class="text-4xl primary-heading">BIG BANG</h3></div>
+                    <div class="card-face card-back text-sm">
+                        <h4 class="text-lg font-bold mb-2 secondary-heading">تواصل معنا</h4>
+                        <p>info@bigbang.com</p> <p>+966 11 123 4567</p>
+                        <div class="mt-2 text-xl space-x-4">
+                            <a href="#" class="hover:text-yellow-400"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="hover:text-yellow-400"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main> 
+
+    <!-- Modals -->
+    <div id="services-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-id="services-modal">&times;</span>
+            <h3 class="text-2xl font-bold mb-6 secondary-heading">اختر الخدمة</h3>
+            <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+    </div>
+    <div id="profile-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-id="profile-modal">&times;</span>
+            <button class="back-button" id="back-to-profile-btn" style="display: none;"><i class="fas fa-arrow-right"></i></button>
+            <div id="profile-main-view">
+                <h3 class="text-2xl font-bold mb-6 secondary-heading">ملفك الشخصي</h3>
+                <div id="profile-list" class="flex flex-col gap-4">
+                    <button class="w-full text-right p-4 interactive-icon hover:bg-gray-700/50 rounded-lg" data-profile-view="cart"><div class="flex items-center gap-4"><i class="fas fa-shopping-cart text-2xl"></i><span class="font-bold">السلة</span></div></button>
+                    <button class="w-full text-right p-4 interactive-icon hover:bg-gray-700/50 rounded-lg" data-profile-view="favorites"><div class="flex items-center gap-4"><i class="fas fa-heart text-2xl"></i><span class="font-bold">المفضلة</span></div></button>
+                </div>
+            </div>
+            <div id="profile-sub-view" style="display: none;">
+                <h3 id="profile-sub-view-title" class="text-2xl font-bold mb-6 secondary-heading"></h3>
+                <div id="profile-sub-view-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="animal-card-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-id="animal-card-modal">&times;</span>
+            <button class="back-button" id="animal-back-btn" style="display: none;"><i class="fas fa-arrow-right"></i></button>
+            
+            <div id="animal-card-browser">
+                 <h3 id="animal-browser-title" class="text-2xl font-bold mb-6 secondary-heading">اختر قسماً</h3>
+                 <div id="animal-browser-content" class="selection-grid"></div>
+            </div> 
+
+            <div class="animal-card-carousel">
+                <div id="animal-card-container"></div> <!-- Content will be injected here -->
+                <button class="interactive-icon animal-nav-arrow next" id="animal-next-btn"><i class="fas fa-chevron-left"></i></button>
+                <button class="interactive-icon animal-nav-arrow prev" id="animal-prev-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
 
 <script>
-    // --- SUPABASE SETUP ---
-    const SUPABASE_URL = 'https://ntnmbfdhxbclvgplbijw.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI-bFQ'; // NOTE: I've intentionally shortened your key for public display. The code uses the full key.
-    const supabase = Supabase.createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50bm1iZmRoeGJjbHZncGxiaWp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODk1MTQsImV4cCI6MjA3MjE2NTUxNH0.RLtF1R4vMGS09yDeaLg6rCg_UR96FS_8QI5YHG7-bFQ');
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // --- DATA STRUCTURES ---
+        const creaturesData = {
+            land: {
+                "الثدييات": {
+                    "القطط": [
+                        { id: 'cat_brit', name: 'القط البريطاني', sciName: 'Felis catus', care: 'سهل', price: 2500, desc: 'قط هادئ ومستقل، معروف بفروه الكثيف.', habitat: 'المملكة المتحدة', lifespan: '15-20 سنة', size: 'متوسط', behavior: 'هادئ', nutrition: 'طعام جاف', housing: 'منزل آمن', health: 'فحوصات سنوية', compatible: true, license: false, beginner: true },
+                        { id: 'cat_persian', name: 'الشيرازي', sciName: 'Felis catus', care: 'متوسط', price: 3000, desc: 'قط فاخر وهادئ، يتطلب عناية بفروه الطويل.', habitat: 'إيران', lifespan: '12-17 سنة', size: 'متوسط', behavior: 'هادئ', nutrition: 'طعام رطب وجاف', housing: 'منزل', health: 'عناية بالعيون والفرو', compatible: true, license: false, beginner: true },
+                        { id: 'cat_siamese', name: 'السيامي', sciName: 'Felis catus', care: 'متوسط', price: 2800, desc: 'قط اجتماعي وذكي، معروف بصوته المميز.', habitat: 'تايلاند', lifespan: '15-20 سنة', size: 'متوسط', behavior: 'صوتي، نشيط', nutrition: 'طعام عالي البروتين', housing: 'منزل به مساحة للعب', health: 'فحوصات دورية', compatible: true, license: false, beginner: false },
+                    ],
+                    "الكلاب": [
+                        { id: 'dog_husky', name: 'الهاسكي', sciName: 'Canis lupus familiaris', care: 'صعب', price: 5000, desc: 'كلب نشيط وقوي، يشبه الذئب ويحتاج لتمارين كثيرة.', habitat: 'سيبيريا', lifespan: '12-15 سنة', size: 'كبير', behavior: 'عنيد، نشيط', nutrition: 'طعام غني بالطاقة', housing: 'مساحة كبيرة للركض', health: 'يتحمل البرودة', compatible: false, license: true, beginner: false },
+                        { id: 'dog_german', name: 'الجيرمن شيبرد', sciName: 'Canis lupus familiaris', care: 'متوسط', price: 4500, desc: 'كلب ذكي ومخلص، يستخدم في الحراسة والشرطة.', habitat: 'ألمانيا', lifespan: '9-13 سنة', size: 'كبير', behavior: 'شجاع، قابل للتدريب', nutrition: 'طعام متوازن', housing: 'منزل مع فناء', health: 'عرضة لمشاكل الفخذ', compatible: true, license: true, beginner: true },
+                    ],
+                    "القوارض والأرانب": [
+                         { id: 'rodent_hamster', name: 'الهامستر', sciName: 'Cricetinae', care: 'سهل', price: 100, desc: 'حيوان صغير ونشيط، يحب الجري في العجلة.', habitat: 'سوريا', lifespan: '2-3 سنوات', size: 'صغير', behavior: 'ليلي', nutrition: 'حبوب وخضروات', housing: 'قفص مع عجلة', health: 'فحص الأسنان', compatible: false, license: false, beginner: true },
+                    ]
+                },
+                "الزواحف": {
+                    "السحالي": [
+                        { id: 'lizard_bearded', name: 'التنين الملتحي', sciName: 'Pogona vitticeps', care: 'متوسط', price: 800, desc: 'سحلية ودودة وسهلة الترويض.', habitat: 'أستراليا', lifespan: '10-15 سنة', size: '40-60 سم', behavior: 'هادئ', nutrition: 'حشرات وخضروات', housing: 'حوض زجاجي', health: 'تحتاج إضاءة UVB', compatible: false, license: false, beginner: true },
+                         { id: 'lizard_chameleon', name: 'الحرباء', sciName: 'Chamaeleonidae', care: 'صعب', price: 1200, desc: 'سحلية فريدة تغير لونها، تحتاج لبيئة خاصة جداً.', habitat: 'أفريقيا، مدغشقر', lifespan: '5-7 سنوات', size: 'متغير', behavior: 'انعزالي', nutrition: 'حشرات حية', housing: 'قفص شبكي جيد التهوية', health: 'حساسة جداً للبيئة', compatible: false, license: false, beginner: false },
+                    ],
+                    "الثعابين": [
+                         { id: 'snake_corn', name: 'ثعبان الذرة', sciName: 'Pantherophis guttatus', care: 'سهل', price: 600, desc: 'ثعبان صغير وهادئ، خيار ممتاز للمبتدئين.', habitat: 'أمريكا الشمالية', lifespan: '15-20 سنة', size: '1-1.5 متر', behavior: 'هادئ', nutrition: 'فئران صغيرة', housing: 'حوض زجاجي آمن', health: 'سهل الرعاية', compatible: false, license: false, beginner: true },
+                    ]
+                }
+            },
+            sky: {
+                "الطيور": {
+                    "الببغاوات الكبيرة": [
+                        { id: 'parrot_grey', name: 'ببغاء الكاسكو', sciName: 'Psittacus erithacus', care: 'صعب', price: 6000, desc: 'طائر ذكي للغاية وقادر على تقليد الكلام.', habitat: 'وسط أفريقيا', lifespan: '40-60 سنة', size: '33 سم', behavior: 'ذكي، اجتماعي', nutrition: 'بذور وفواكه', housing: 'قفص كبير', health: 'يحتاج لتحفيز ذهني', compatible: false, license: true, beginner: false },
+                    ],
+                     "طيور الزينة": [
+                        { id: 'bird_canary', name: 'الكناري', sciName: 'Serinus canaria domestica', care: 'سهل', price: 400, desc: 'طائر صغير معروف بتغريده الجميل.', habitat: 'جزر الكناري', lifespan: '10 سنوات', size: 'صغير', behavior: 'مغرد', nutrition: 'بذور الكناري', housing: 'قفص مناسب', health: 'سهل التربية', compatible: true, license: false, beginner: true },
+                    ]
+                }
+            },
+            water: {
+                "الأسماك": {
+                    "أسماك المياه العذبة": [
+                        { id: 'fish_betta', name: 'سمكة البيتا', sciName: 'Betta splendens', care: 'سهل', price: 50, desc: 'سمكة قتالية ذات ألوان زاهية.', habitat: 'تايلاند', lifespan: '2-4 سنوات', size: '7 سم', behavior: 'عدواني', nutrition: 'طعام البيتا', housing: 'حوض 5 جالون+', health: 'عرضة لتعفن الزعانف', compatible: false, license: false, beginner: true },
+                    ]
+                }
+            }
+        }; 
 
-    let allCreaturesData = []; // This will hold the live data
+        const App = {
+            state: {
+                creatureColorIndex: 0, creatureShapeIndex: 0, 
+                cart: [], favorites: [],
+                currentBiome: 'none', isTransforming: false,
+                animalBrowser: {
+                    level: 'sections', // sections, types, cards
+                    selectedSection: null,
+                    selectedType: null,
+                    creatures: [],
+                    currentIndex: 0
+                }
+            },
+            customizationOptions: {
+                colors: [ { value: '#FFD700', name: 'ذهبي' }, { value: '#00A99D', name: 'فيروزي' }, { value: '#4C3B76', name: 'بنفسجي' }, { value: '#2E8B57', name: 'أخضر' }, { value: '#B0E0E6', name: 'سماوي' }, { value: '#FF6347', name: 'مرجاني' } ],
+                shapes: [ { value: 'icosahedron', icon: 'fa-cube' }, { value: 'dodecahedron', icon: 'fa-dice-d20' }, { value: 'torus', icon: 'fa-ring' }, { value: 'sphere', icon: 'fa-circle' } ]
+            },
+            servicesData: {
+                clinic: { title: "العيادة", icon: "fa-clinic-medical", options: [ { name: "فحص شامل", price: 300 }, { name: "استشارة غذائية", price: 150 } ] },
+                hotel: { title: "الفندق", icon: "fa-hotel", options: [ { name: "إقامة لليلة واحدة", price: 100 }, { name: "إقامة أسبوع", price: 600 } ] },
+            },
+            showCityNavUI: () => {
+                gsap.to('#city-nav-ui', { opacity: 1, y: 0, duration: 1, onComplete: () => { document.getElementById('city-nav-ui').style.pointerEvents = 'auto'; } });
+            }
+        };
+        
+        // --- ANIMAL CARD LOGIC ---
+        const openAnimalExplorer = () => {
+            App.state.animalBrowser.level = 'sections';
+            renderAnimalBrowser();
+            document.getElementById('animal-card-modal').style.display = 'block';
+        }; 
 
-    // --- NEW: DATA FETCHING FUNCTION ---
-    async function fetchDataAndSetup() {
-        console.log("Fetching data from Supabase...");
-        const { data, error } = await supabase.from('creatures').select('*');
-        
-        if (error) {
-            console.error('Error fetching data:', error);
-            // You can update the UI to show an error message
-            document.getElementById('city-creatures-list').textContent = "فشل تحميل البيانات.";
-            document.getElementById('forest-creatures-list').textContent = "فشل تحميل البيانات.";
-            return;
-        }
-        
-        allCreaturesData = data;
-        console.log("Data fetched successfully:", allCreaturesData);
-        
-        // Now that we have data, let's display it
-        populateCreatureLists();
-    }
-    
-    // --- NEW: FUNCTION TO DISPLAY DATA ---
-    function populateCreatureLists() {
-        // This is a simple example. We can make this mapping smarter later.
-        const cityCreatures = allCreaturesData.filter(c => c.environment === 'اليابسة' && (c.type === 'القطط' || c.type === 'الكلاب')).map(c => c.common_name);
-        const forestCreatures = allCreaturesData.filter(c => c.environment === 'الهواء' || c.type === 'الحشرات الغريبة').map(c => c.common_name);
+        const renderAnimalBrowser = () => {
+            const browserEl = document.getElementById('animal-card-browser');
+            const carouselEl = document.querySelector('.animal-card-carousel');
+            const titleEl = document.getElementById('animal-browser-title');
+            const contentEl = document.getElementById('animal-browser-content');
+            const backBtn = document.getElementById('animal-back-btn'); 
 
-        document.getElementById('city-creatures-list').textContent = cityCreatures.length > 0 ? cityCreatures.join('، ') : "لا توجد مخلوقات في هذا العالم بعد.";
-        document.getElementById('forest-creatures-list').textContent = forestCreatures.length > 0 ? forestCreatures.join('، ') : "لا توجد مخلوقات في هذا العالم بعد.";
-    }
+            const biomeMap = { forest: 'land', sky: 'sky', water: 'water', desert: 'land', snow: 'land' };
+            const biomeKey = biomeMap[App.state.currentBiome] || 'land';
+            const data = creaturesData[biomeKey]; 
 
-    // --- ORIGINAL THREE.JS & GSAP CODE ---
-    // All your original animation and 3D setup code is preserved here
-    // For brevity, I'm representing it with a comment block.
-    // The actual code includes everything from your original file related to
-    // scene, camera, renderer, GLTFLoader, GSAP timelines, ScrollTrigger, etc.
-    
-    function setupOriginalAnimations() {
-        // This function contains all the GSAP and 3D animation logic
-        // from your original file to ensure it's not lost.
-        // For example:
-        gsap.registerPlugin(ScrollTrigger);
-        // ... all your timelines and scroll triggers ...
-        console.log("Original animations are set up.");
-    }
+            browserEl.style.display = 'block';
+            carouselEl.style.display = 'none';
+            contentEl.innerHTML = ''; 
 
+            if (App.state.animalBrowser.level === 'sections') {
+                titleEl.textContent = 'اختر قسماً';
+                backBtn.style.display = 'none';
+                Object.keys(data).forEach(section => {
+                    const item = document.createElement('div');
+                    item.className = 'selection-item';
+                    item.textContent = section;
+                    item.onclick = () => {
+                        App.state.animalBrowser.selectedSection = section;
+                        App.state.animalBrowser.level = 'types';
+                        renderAnimalBrowser();
+                    };
+                    contentEl.appendChild(item);
+                });
+            } else if (App.state.animalBrowser.level === 'types') {
+                const section = App.state.animalBrowser.selectedSection;
+                titleEl.textContent = `اختر نوعاً من ${section}`;
+                backBtn.style.display = 'block';
+                Object.keys(data[section]).forEach(type => {
+                    const item = document.createElement('div');
+                    item.className = 'selection-item';
+                    item.textContent = type;
+                    item.onclick = () => {
+                        App.state.animalBrowser.selectedType = type;
+                        App.state.animalBrowser.level = 'cards';
+                        App.state.animalBrowser.creatures = data[section][type];
+                        App.state.animalBrowser.currentIndex = 0;
+                        renderAnimalBrowser();
+                    };
+                    contentEl.appendChild(item);
+                });
+            } else if (App.state.animalBrowser.level === 'cards') {
+                browserEl.style.display = 'none';
+                carouselEl.style.display = 'block';
+                backBtn.style.display = 'block';
+                renderAnimalCard();
+            }
+        }; 
 
-    // --- MAIN INITIALIZATION ---
-    function init() {
-        // Setup original 3D scene and animations first
-        setupOriginalAnimations();
-        
-        // Then, fetch live data from the database
-        fetchDataAndSetup();
-    }
+        const animalBrowserGoBack = () => {
+            if (App.state.animalBrowser.level === 'cards') {
+                App.state.animalBrowser.level = 'types';
+            } else if (App.state.animalBrowser.level === 'types') {
+                App.state.animalBrowser.level = 'sections';
+            }
+            renderAnimalBrowser();
+        }; 
 
-    window.onload = init;
-</script>
-</body>
-</html>            <div class="content-box">
-                <h2 class="text-4xl font-bold">اصنع مخلوقك</h2>
-                <p class="mt-4">هنا تبدأ قصة رفيقك الخاص.</p>
-            </div>
-        </section>
+        const renderAnimalCard = () => {
+            const container = document.getElementById('animal-card-container');
+            const creatures = App.state.animalBrowser.creatures;
+            if (creatures.length === 0) {
+                container.innerHTML = `<p class="text-center">لا توجد مخلوقات في هذا النوع حاليًا.</p>`;
+                return;
+            }
+            const animal = creatures[App.state.animalBrowser.currentIndex];
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div>
+                        <img src="https://placehold.co/600x400/111827/E5E7EB?text=${encodeURIComponent(animal.name)}" alt="${animal.name}" class="rounded-lg w-full h-auto object-cover">
+                    </div>
+                    <div>
+                        <h2 class="text-4xl font-bold primary-heading">${animal.name}</h2>
+                        <p class="text-gray-400 mb-4">${animal.sciName}</p>
+                        <p class="mb-6">${animal.desc}</p>
+                        <div class="flex items-center justify-between bg-gray-800 p-3 rounded-lg mb-6">
+                            <span class="font-bold text-2xl secondary-heading">${animal.price} ريال</span>
+                            <div class="flex gap-3">
+                                <button class="interactive-icon text-2xl" data-action="add-to-favorites" data-id="${animal.id}">
+                                    <i class="${App.state.favorites.some(f => f.id === animal.id) ? 'fas' : 'far'} fa-heart"></i>
+                                    <span class="tooltip">أضف للمفضلة</span>
+                                </button>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg" data-action="add-to-cart" data-id="${animal.id}">أضف للسلة</button>
+                            </div>
+                        </div>
+                        <div class="animal-card-tabs flex gap-4">
+                            <button class="animal-card-tab active" data-tab="1">معلومات أساسية</button>
+                            <button class="animal-card-tab" data-tab="2">تفاصيل الرعاية</button>
+                            <button class="animal-card-tab" data-tab="3">ملاحظات إضافية</button>
+                        </div>
+                        <div id="tab-content-1" class="animal-card-tab-content active">
+                            <div class="info-grid">
+                                <div class="info-item"><i class="fas fa-user-md"></i><span>${animal.care}</span></div>
+                                <div class="info-item"><i class="fas fa-ruler-combined"></i><span>${animal.size}</span></div>
+                                <div class="info-item"><i class="fas hourglass-half"></i><span>${animal.lifespan}</span></div>
+                                <div class="info-item"><i class="fas fa-map-marker-alt"></i><span>${animal.habitat}</span></div>
+                            </div>
+                        </div>
+                        <div id="tab-content-2" class="animal-card-tab-content">
+                             <div class="info-grid">
+                                <div class="info-item"><i class="fas fa-bone"></i><span>${animal.nutrition}</span></div>
+                                <div class="info-item"><i class="fas fa-home"></i><span>${animal.housing}</span></div>
+                                <div class="info-item"><i class="fas fa-heartbeat"></i><span>${animal.health}</span></div>
+                                <div class="info-item"><i class="fas fa-brain"></i><span>${animal.behavior}</span></div>
+                            </div>
+                        </div>
+                        <div id="tab-content-3" class="animal-card-tab-content">
+                            <ul class="text-right list-disc pr-5 space-y-2">
+                                <li>${animal.compatible ? 'متوافق مع حيوانات أخرى' : 'غير متوافق'}</li>
+                                <li>${animal.license ? 'يتطلب ترخيص' : 'لا يتطلب ترخيص'}</li>
+                                <li>${animal.beginner ? 'مناسب للمبتدئين' : 'غير مناسب للمبتدئين'}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            attachCardEventListeners();
+        };
+        
+        const attachCardEventListeners = () => {
+            document.querySelectorAll('.animal-card-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tab.parentElement.querySelectorAll('.animal-card-tab').forEach(t => t.classList.remove('active'));
+                    tab.closest('.modal-content').querySelectorAll('.animal-card-tab-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`tab-content-${tab.dataset.tab}`).classList.add('active');
+                });
+            });
+            
+            document.querySelector('[data-action="add-to-cart"]').addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const animal = App.state.animalBrowser.creatures.find(c => c.id === id);
+                if (animal && !App.state.cart.some(item => item.id === id)) {
+                    App.state.cart.push(animal);
+                    e.currentTarget.innerHTML = `تمت الإضافة <i class="fas fa-check"></i>`;
+                    setTimeout(() => { if(e.currentTarget) e.currentTarget.innerHTML = `أضف للسلة`}, 2000);
+                }
+            }); 
 
-        <section id="journey-start-section" class="narrative-section">
-             <div class="content-box">
-                <h2 class="text-4xl font-bold">بداية الرحلة</h2>
-                <p class="mt-4">استكشف العوالم المختلفة.</p>
-            </div>
-        </section>
-        
-        <section id="city-section" class="narrative-section">
-            <div class="content-box">
-                <h2 class="text-4xl font-bold">عالم المدينة</h2>
-                <p class="mt-2" id="city-creatures-list">مخلوقات هذا العالم...</p>
-            </div>
-        </section>
-        <section id="forest-section" class="narrative-section">
-            <div class="content-box">
-                <h2 class="text-4xl font-bold">عالم الغابة</h2>
-                <p class="mt-2" id="forest-creatures-list">مخلوقات هذا العالم...</p>
-            </div>
-        </section>
-        <section id="snow-section" class="narrative-section">
-            <div class="content-box">
-                <h2 class="text-4xl font-bold">عالم الثلج</h2>
-                <p class="mt-2" id="snow-creatures-list">مخلوقات هذا العالم...</p>
-            </div>
-        </section>
-        <section id="desert-section" class="narrative-section">
-            <div class="content-box">
-                <h2 class="text-4xl font-bold">عالم الصحراء</h2>
-                 <p class="mt-2" id="desert-creatures-list">مخلوقات هذا العالم...</p>
-            </div>
-        </section>
+            document.querySelector('[data-action="add-to-favorites"]').addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const animal = App.state.animalBrowser.creatures.find(c => c.id === id);
+                const icon = e.currentTarget.querySelector('i');
+                if (animal) {
+                    const favIndex = App.state.favorites.findIndex(item => item.id === id);
+                    if (favIndex > -1) {
+                         App.state.favorites.splice(favIndex, 1);
+                         icon.classList.replace('fas', 'far');
+                    } else {
+                        App.state.favorites.push(animal);
+                        icon.classList.replace('far', 'fas');
+                    }
+                }
+            });
+        }; 
 
-        <section class="narrative-section">
-            <div class="content-box">
-                <h2 class="text-4xl font-bold">نهاية الرحلة؟</h2>
-                <p class="mt-4">أم بدايتها...</p>
-            </div>
-        </section>
-    </div>
+        const showNextAnimal = () => {
+            const browserState = App.state.animalBrowser;
+            browserState.currentIndex = (browserState.currentIndex + 1) % browserState.creatures.length;
+            renderAnimalCard();
+        };
+        const showPrevAnimal = () => {
+            const browserState = App.state.animalBrowser;
+            browserState.currentIndex = (browserState.currentIndex - 1 + browserState.creatures.length) % browserState.creatures.length;
+            renderAnimalCard();
+        }; 
 
-<script>
-    // --- SUPABASE SETUP ---
-    const SUPABASE_URL = 'https://ntnmbfdhxbclvgplbijw.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50bm1iZmRoeGJjbHZncGxiaWp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1ODk1MTQsImV4cCI6MjA3MjE2NTUxNH0.RLtF1R-bFQ';
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const renderProfileView = (view) => {
+            document.getElementById('profile-main-view').style.display = 'none';
+            document.getElementById('profile-sub-view').style.display = 'block';
+            document.getElementById('back-to-profile-btn').style.display = 'block';
+            const titleEl = document.getElementById('profile-sub-view-title');
+            const contentEl = document.getElementById('profile-sub-view-content');
+            let content = ''; 
 
-    // --- THREE.JS SCENE SETUP ---
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('.three-canvas') });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    camera.position.z = 5;
+            if(view === 'cart') {
+                titleEl.textContent = 'السلة';
+                if(App.state.cart.length === 0) { content = '<p>السلة فارغة.</p>'; } 
+                else {
+                    const items = App.state.cart.map(item => `<div class="flex justify-between items-center p-2 bg-gray-800 rounded-lg"><span>${item.name}</span><span>${item.price} ريال</span></div>`).join('');
+                    const total = App.state.cart.reduce((sum, item) => sum + item.price, 0);
+                    content = `<div class="space-y-2">${items}</div><div class="mt-4 pt-2 border-t border-gray-600 flex justify-between font-bold text-lg"><span>المجموع</span><span>${total} ريال</span></div>`;
+                }
+            } else if (view === 'favorites') {
+                titleEl.textContent = 'المفضلة';
+                 if(App.state.favorites.length === 0) { content = '<p>المفضلة فارغة.</p>'; } 
+                 else {
+                    content = '<div class="space-y-2">' + App.state.favorites.map(item => `<div class="flex justify-between items-center p-2 bg-gray-800 rounded-lg"><span>${item.name}</span><button class="text-red-500 hover:text-red-400" onclick="removeFavorite('${item.id}')"><i class="fas fa-trash"></i></button></div>`).join('') + '</div>';
+                }
+            }
+            contentEl.innerHTML = content;
+        };
+        
+        window.removeFavorite = (id) => {
+            App.state.favorites = App.state.favorites.filter(item => item.id !== id);
+            renderProfileView('favorites');
+        } 
 
-    // --- DATA FETCHING & UI POPULATION ---
-    async function populateCreatureData() {
-        const { data, error } = await supabase.from('creatures').select('common_name, environment');
-        if (error) {
-            console.error("Error fetching data:", error);
-            return;
-        }
+        const showProfileMainView = () => {
+             document.getElementById('profile-main-view').style.display = 'block';
+             document.getElementById('profile-sub-view').style.display = 'none';
+             document.getElementById('back-to-profile-btn').style.display = 'none';
+        } 
 
-        const creaturesByBiome = {
-            المدينة: [], // Assuming "اليابسة" can be mapped to different biomes
-            الغابة: [],
-            الثلج: [],
-            الصحراء: []
-        };
-        
-        // Simple mapping based on known creatures, can be improved with more data
-        data.forEach(c => {
-            if (['القطط', 'الكلاب'].some(type => c.common_name.includes(type))) {
-                creaturesByBiome.المدينة.push(c.common_name);
-            } else if (['المكاو', 'السرعوف'].some(type => c.common_name.includes(type))) {
-                creaturesByBiome.الغابة.push(c.common_name);
-            } else if (c.common_name.includes('الهاسكي')) {
-                 creaturesByBiome.الثلج.push(c.common_name);
-            } else if (['التنين الملتحي', 'ليوبارد جيكو'].some(type => c.common_name.includes(type))) {
-                 creaturesByBiome.الصحراء.push(c.common_name);
-            }
-        });
-
-        document.getElementById('city-creatures-list').textContent = creaturesByBiome.المدينة.join('، ');
-        document.getElementById('forest-creatures-list').textContent = creaturesByBiome.الغابة.join('، ');
-        document.getElementById('snow-creatures-list').textContent = creaturesByBiome.الثلج.join('، ');
-        document.getElementById('desert-creatures-list').textContent = creaturesByBiome.الصحراء.join('، ');
-    }
-
-
-    // --- GSAP SCROLL-BASED ANIMATIONS ---
-    function setupAnimations() {
-        gsap.registerPlugin(ScrollTrigger);
-
-        // --- NEW: Journey Icons Animation ---
-        const iconsContainer = document.getElementById('journey-icons-container');
-        const icons = gsap.utils.toArray('.journey-icon');
-
-        // Show the icon container after the intro section
-        ScrollTrigger.create({
-            trigger: "#design-creature-section",
-            start: "top center",
-            onEnter: () => gsap.to(iconsContainer, { opacity: 1, duration: 0.5 }),
-            onLeaveBack: () => gsap.to(iconsContainer, { opacity: 0, duration: 0.5 }),
-        });
-
-        // Animate each icon based on its section
-        icons.forEach(icon => {
-            const sectionId = icon.getAttribute('href');
-            ScrollTrigger.create({
-                trigger: sectionId,
-                start: "top center",
-                end: "bottom center",
-                onToggle: self => {
-                    if (self.isActive) {
-                        icon.classList.add('active');
-                    } else {
-                        icon.classList.remove('active');
-                    }
-                }
-            });
-        });
-
-
-        // --- Existing 3D Scene Animations (Simplified Example) ---
-        // Big Bang Effect
-        const bigBangTl = gsap.timeline({
-            scrollTrigger: {
-                trigger: '#big-bang-section',
-                scrub: 1,
-                start: 'top top',
-                end: 'bottom top'
-            }
-        });
-        // You would add 3D animations here, for example:
-        // bigBangTl.to(camera.position, { z: 20 });
-        
-        // Biome transitions
-        // This is where you would change the 3D background for each section
-        const biomes = ['city', 'forest', 'snow', 'desert'];
-        biomes.forEach(biome => {
-            ScrollTrigger.create({
-                trigger: `#${biome}-section`,
-                start: 'top center',
-                end: 'bottom center',
-                onEnter: () => console.log(`Entering ${biome} biome`),
-                onEnterBack: () => console.log(`Entering ${biome} biome`),
-                // Add function calls here to change the 3D scene
-            });
-        });
-    }
-
-    // --- MAIN APP INITIALIZATION ---
-    function init() {
-        // Initial render loop for Three.js
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Handle window resizing
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Fetch data and setup animations
-        populateCreatureData();
-        setupAnimations();
-    }
-
-    window.onload = init;
-</script>
-</body>
-</html>
+        const AudioEngine = {
+            context: null, sources: {},
+            init() { if (!this.context) this.context = new (window.AudioContext || window.webkitAudioContext)(); },
+            createBrownNoise(gain = 1) {
+                if(!this.context) return null;
+                const bufferSize = this.context.sampleRate * 2;
+                const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+                const output = buffer.getChannelData(0);
+                let lastOut = 0.0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i]; output[i] *= 3.5 * gain;
+                }
+                const node = this.context.createBufferSource();
+                node.buffer = buffer; node.loop = true;
+                return node;
+            },
+            playSoundscape(type) {
+                this.init(); this.stopAll();
+                let gainVal = 0.1;
+                if (type === 'forest' || type === 'desert' || type === 'snow') {
+                    if (type === 'desert') gainVal = 0.3;
+                    if (type === 'snow') gainVal = 0.4;
+                    const wind = this.createBrownNoise(gainVal);
+                    if(!wind) return;
+                    const filter = this.context.createBiquadFilter();
+                    filter.type = "lowpass"; filter.
